@@ -7,7 +7,7 @@ import {
 	NodeConnectionType,
 } from 'n8n-workflow';
 
-import { Database } from 'sqlite3';
+import Database from 'better-sqlite3';
 import * as path from 'path';
 import * as fs from 'fs';
 
@@ -74,28 +74,24 @@ export class ChatBuffer implements INodeType {
 		const dbPath = ChatBuffer.initializeDatabase();
 		const db = new Database(dbPath);
 
-		// Asegurar que la tabla existe antes de continuar
-		await new Promise<void>((resolve, reject) => {
-			db.serialize(() => {
-				db.run(
-					`
-					CREATE TABLE IF NOT EXISTS message_buffer (
-						id INTEGER PRIMARY KEY AUTOINCREMENT,
-						session_id TEXT NOT NULL,
-						message TEXT NOT NULL,
-						timestamp INTEGER NOT NULL,
-						created_at TEXT NOT NULL
-					)
-				`,
-					function (err: any) {
-						if (err) reject(err);
-						else resolve();
-					},
-				);
-			});
-		});
-
 		try {
+			// Asegurar que la tabla existe
+			db.exec(`
+				CREATE TABLE IF NOT EXISTS message_buffer (
+					id INTEGER PRIMARY KEY AUTOINCREMENT,
+					session_id TEXT NOT NULL,
+					message TEXT NOT NULL,
+					timestamp INTEGER NOT NULL,
+					created_at TEXT NOT NULL
+				)
+			`);
+
+			// Preparar statement para insertar mensajes
+			const insertStmt = db.prepare(`
+				INSERT INTO message_buffer (session_id, message, timestamp, created_at) 
+				VALUES (?, ?, ?, ?)
+			`);
+
 			for (let i = 0; i < items.length; i++) {
 				const sessionId = this.getNodeParameter('sessionId', i) as string;
 				const message = this.getNodeParameter('message', i) as string;
@@ -105,17 +101,7 @@ export class ChatBuffer implements INodeType {
 				const currentTime = Date.now();
 
 				// 1. Agregar el mensaje actual al buffer
-				await new Promise<void>((resolve, reject) => {
-					db.run(
-						`INSERT INTO message_buffer (session_id, message, timestamp, created_at) 
-						 VALUES (?, ?, ?, ?)`,
-						[sessionId, message, currentTime, new Date().toISOString()],
-						function (err: any) {
-							if (err) reject(err);
-							else resolve();
-						},
-					);
-				});
+				insertStmt.run(sessionId, message, currentTime, new Date().toISOString());
 
 				// 2. Iniciar el loop global de verificación si no existe
 				if (!globalCheckInterval) {
@@ -140,23 +126,18 @@ export class ChatBuffer implements INodeType {
 		return returnData.length > 0 ? [returnData] : [];
 	}
 
-	private static async processBuffer(
-		db: Database,
+	private static processBuffer(
+		db: Database.Database,
 		sessionId: string,
 		separator: string,
-	): Promise<INodeExecutionData | null> {
+	): INodeExecutionData | null {
 		try {
 			// Obtener todos los mensajes del buffer para esta sesión
-			const messages = await new Promise<any[]>((resolve, reject) => {
-				db.all(
+			const messages = db
+				.prepare(
 					'SELECT message, timestamp FROM message_buffer WHERE session_id = ? ORDER BY timestamp ASC',
-					[sessionId],
-					function (err: any, rows: any[]) {
-						if (err) reject(err);
-						else resolve(rows);
-					},
-				);
-			});
+				)
+				.all(sessionId);
 
 			if (messages.length === 0) {
 				return null;
@@ -166,12 +147,7 @@ export class ChatBuffer implements INodeType {
 			const concatenatedMessage = messages.map((msg: any) => msg.message).join(separator);
 
 			// Limpiar el buffer para esta sesión
-			await new Promise<void>((resolve, reject) => {
-				db.run('DELETE FROM message_buffer WHERE session_id = ?', [sessionId], function (err: any) {
-					if (err) reject(err);
-					else resolve();
-				});
-			});
+			db.prepare('DELETE FROM message_buffer WHERE session_id = ?').run(sessionId);
 
 			// Retornar solo sessionId y concatenatedMessage
 			return {
@@ -193,85 +169,57 @@ export class ChatBuffer implements INodeType {
 		}
 
 		// Crear nuevo interval que verifica cada 1000ms
-		globalCheckInterval = setInterval(async () => {
+		globalCheckInterval = setInterval(() => {
 			try {
 				const dbPath = ChatBuffer.initializeDatabase();
 				const db = new Database(dbPath);
 
-				// Obtener todas las sesiones con su último mensaje
-				const sessions = await new Promise<any[]>((resolve, reject) => {
-					db.all(
-						`SELECT session_id, MAX(timestamp) as last_message_timestamp 
-						 FROM message_buffer 
-						 GROUP BY session_id`,
-						function (err: any, rows: any[]) {
-							if (err) reject(err);
-							else resolve(rows || []);
-						},
-					);
-				});
+				try {
+					// Obtener todas las sesiones con su último mensaje
+					const sessions = db
+						.prepare(
+							`
+						SELECT session_id, MAX(timestamp) as last_message_timestamp 
+						FROM message_buffer 
+						GROUP BY session_id
+					`,
+						)
+						.all();
 
-				const currentTime = Date.now();
+					const currentTime = Date.now();
 
-				// Verificar cada sesión
-				for (const session of sessions) {
-					const timeSinceLastMessage = currentTime - session.last_message_timestamp;
+					for (const session of sessions) {
+						const sessionData = session as any;
+						const timeDiff = currentTime - sessionData.last_message_timestamp;
 
-					// Si han pasado más de timeout ms desde el último mensaje
-					if (timeSinceLastMessage >= defaultTimeout) {
-						const processedData = await ChatBuffer.processBuffer(
-							db,
-							session.session_id,
-							defaultSeparator,
-						);
+						if (timeDiff >= defaultTimeout) {
+							// Procesar el buffer para esta sesión
+							const result = ChatBuffer.processBuffer(db, sessionData.session_id, defaultSeparator);
 
-						if (processedData) {
-							// Almacenar en pending emissions para la próxima ejecución
-							const pendingKey = `${session.session_id}_${defaultTimeout}_${defaultSeparator}`;
-							pendingEmissions.set(pendingKey, processedData);
+							if (result) {
+								// Almacenar el resultado para la próxima ejecución del nodo
+								const pendingKey = `${sessionData.session_id}_${defaultTimeout}_${defaultSeparator}`;
+								pendingEmissions.set(pendingKey, result);
+							}
 						}
 					}
+				} finally {
+					db.close();
 				}
-
-				db.close();
 			} catch (error) {
 				console.error('Error en globalCheckLoop:', error);
 			}
-		}, 1000); // Verificar cada 1000ms
+		}, 1000);
 	}
 
 	private static initializeDatabase(): string {
-		const n8nFolder = process.env.N8N_USER_FOLDER || path.join(process.cwd(), '.n8n');
-		const dbFolder = path.join(n8nFolder, 'chatbuffer');
-		const dbPath = path.join(dbFolder, 'messages.db');
+		const dbDir = path.join('/tmp', 'n8n-chat-buffer');
 
 		// Crear directorio si no existe
-		if (!fs.existsSync(dbFolder)) {
-			fs.mkdirSync(dbFolder, { recursive: true });
+		if (!fs.existsSync(dbDir)) {
+			fs.mkdirSync(dbDir, { recursive: true });
 		}
 
-		// Crear base de datos y tabla si no existen
-		const db = new Database(dbPath);
-
-		db.serialize(() => {
-			db.run(`
-				CREATE TABLE IF NOT EXISTS message_buffer (
-					id INTEGER PRIMARY KEY AUTOINCREMENT,
-					session_id TEXT NOT NULL,
-					message TEXT NOT NULL,
-					timestamp INTEGER NOT NULL,
-					created_at TEXT NOT NULL
-				)
-			`);
-
-			// Crear índices para mejorar el rendimiento
-			db.run(
-				'CREATE INDEX IF NOT EXISTS idx_session_timestamp ON message_buffer(session_id, timestamp)',
-			);
-			db.run('CREATE INDEX IF NOT EXISTS idx_session_id ON message_buffer(session_id)');
-		});
-
-		db.close();
-		return dbPath;
+		return path.join(dbDir, 'message_buffer.db');
 	}
 }
