@@ -143,7 +143,7 @@ install_chatbuffer_node() {
     log "Creando paquete npm..."
     npm pack > /dev/null 2>&1
     
-    local package_file=$(ls n8n-nodes-chatbuffer-*.tgz | head -1)
+    local package_file=$(ls n8n-nodes-gbplabs-chat-buffer-*.tgz | head -1)
     
     if [ ! -f "$package_file" ]; then
         error "No se pudo crear el paquete npm"
@@ -162,7 +162,7 @@ install_chatbuffer_node() {
     
     # Verificar instalación
     log "Verificando instalación..."
-    if docker exec "$container_name" sh -c "cd /home/node/.n8n/nodes && npm list n8n-nodes-chatbuffer" > /dev/null 2>&1; then
+    if docker exec "$container_name" sh -c "cd /home/node/.n8n/nodes && npm list n8n-nodes-gbplabs-chat-buffer" > /dev/null 2>&1; then
         success "Nodo ChatBuffer instalado correctamente"
     else
         error "Error en la verificación de la instalación"
@@ -237,7 +237,7 @@ uninstall_chatbuffer_node() {
     
     # Desinstalar el nodo
     log "Desinstalando nodo del contenedor..."
-    if docker exec "$container_name" sh -c "cd /home/node/.n8n/nodes && npm uninstall n8n-nodes-chatbuffer" > /dev/null 2>&1; then
+    if docker exec "$container_name" sh -c "cd /home/node/.n8n/nodes && npm uninstall n8n-nodes-gbplabs-chat-buffer" > /dev/null 2>&1; then
         success "Nodo ChatBuffer desinstalado"
     else
         warning "El nodo no estaba instalado o ya fue desinstalado"

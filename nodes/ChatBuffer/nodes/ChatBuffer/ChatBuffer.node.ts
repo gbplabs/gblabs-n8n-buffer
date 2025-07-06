@@ -8,13 +8,14 @@ import {
 } from 'n8n-workflow';
 
 // Buffer global en memoria
-const memoryBuffer: Record<string, Array<{ message: string; timestamp: number }>> = {};
-
-// Variable global para el loop de verificación
-let globalCheckInterval: NodeJS.Timeout | null = null;
-
-// Queue para almacenar mensajes procesados que necesitan ser emitidos
-const pendingEmissions = new Map<string, any>();
+// Estructura: { [sessionId]: { messages: [], timeout: 3000, separator: '. ' } }
+const memoryBuffer: {
+	[key: string]: {
+		messages: { message: string; timestamp: number }[];
+		timeout: number;
+		separator: string;
+	};
+} = {};
 
 export class ChatBuffer implements INodeType {
 	description: INodeTypeDescription = {
@@ -22,9 +23,9 @@ export class ChatBuffer implements INodeType {
 		name: 'chatBuffer',
 		icon: { light: 'file:chatbuffer.svg', dark: 'file:chatbuffer.svg' },
 		group: ['transform'],
-		version: 1,
+		version: 1.1,
 		subtitle: 'Buffer temporal de mensajes',
-		description: 'Acumula mensajes temporalmente y los envía concatenados después del timeout',
+		description: 'Acumula mensajes y los envía concatenados después de un timeout de inactividad',
 		defaults: {
 			name: 'Chat Buffer',
 		},
@@ -45,7 +46,8 @@ export class ChatBuffer implements INodeType {
 				type: 'string',
 				required: true,
 				default: '={{ $json.message || $json.textMessageContent || "" }}',
-				description: 'Contenido del mensaje a agregar al buffer',
+				description:
+					'Contenido del mensaje a agregar al buffer (El string con el texto del mensaje)',
 			},
 			{
 				displayName: 'Timeout (Ms)',
@@ -53,14 +55,14 @@ export class ChatBuffer implements INodeType {
 				type: 'number',
 				default: 3000,
 				required: true,
-				description: 'Tiempo en milisegundos a esperar antes de procesar el buffer',
+				description: 'Tiempo de inactividad en milisegundos a esperar antes de procesar el buffer',
 			},
 			{
 				displayName: 'Separator',
 				name: 'separator',
 				type: 'string',
 				default: '. ',
-				description: 'Separador para concatenar los mensajes (por defecto: ". ").',
+				description: 'Separador para concatenar los mensajes (por defecto punto yespacio: ". ").',
 			},
 		],
 	};
@@ -69,86 +71,83 @@ export class ChatBuffer implements INodeType {
 		const items = this.getInputData();
 		const returnData: INodeExecutionData[] = [];
 
-		try {
-			for (let i = 0; i < items.length; i++) {
+		// Procesar los mensajes entrantes
+		for (let i = 0; i < items.length; i++) {
+			try {
 				const sessionId = this.getNodeParameter('sessionId', i) as string;
 				const message = this.getNodeParameter('message', i) as string;
 				const timeout = this.getNodeParameter('timeout', i) as number;
 				const separator = this.getNodeParameter('separator', i) as string;
 
-				const currentTime = Date.now();
+				// Si no hay mensaje, no hacer nada
+				if (!message) {
+					continue;
+				}
 
-				// 1. Agregar el mensaje actual al buffer en memoria
+				// Crear buffer para la sesión si no existe
 				if (!memoryBuffer[sessionId]) {
-					memoryBuffer[sessionId] = [];
-				}
-				memoryBuffer[sessionId].push({ message, timestamp: currentTime });
-
-				// 2. Iniciar el loop global de verificación si no existe
-				if (!globalCheckInterval) {
-					ChatBuffer.startGlobalCheckLoop(timeout, separator);
+					memoryBuffer[sessionId] = {
+						messages: [],
+						timeout: timeout,
+						separator: separator,
+					};
 				}
 
-				// 3. Verificar si hay mensajes pendientes para emitir de ejecuciones anteriores
-				const pendingKey = `${sessionId}_${timeout}_${separator}`;
-				if (pendingEmissions.has(pendingKey)) {
-					const pendingData = pendingEmissions.get(pendingKey);
-					pendingEmissions.delete(pendingKey);
-					returnData.push(pendingData);
-				}
-			}
-		} catch (error: any) {
-			throw new NodeOperationError(this.getNode(), `Error en ChatBuffer: ${error.message}`);
-		}
+				// Actualizar timeout y separator por si cambiaron en el nodo
+				memoryBuffer[sessionId].timeout = timeout;
+				memoryBuffer[sessionId].separator = separator;
 
-		// Solo retornar datos si hay mensajes procesados
-		return returnData.length > 0 ? [returnData] : [];
-	}
+				// Agregar el mensaje actual al buffer de la sesión
+				const messageTimestamp = Date.now();
+				memoryBuffer[sessionId].messages.push({ message, timestamp: messageTimestamp });
 
-	private static processBuffer(sessionId: string, separator: string): INodeExecutionData | null {
-		const messages = memoryBuffer[sessionId] || [];
-		if (messages.length === 0) {
-			return null;
-		}
+				// ESPERA INTERNA - Replicando el comportamiento del nodo Wait
+				// Esto permite que se acumulen mensajes durante el timeout
+				await new Promise((resolve) => setTimeout(resolve, timeout));
 
-		// Concatenar mensajes
-		const concatenatedMessage = messages.map((msg) => msg.message).join(separator);
+				// Después de la espera, verificar si debemos procesar el buffer
+				const session = memoryBuffer[sessionId];
+				if (session && session.messages.length > 0) {
+					// Obtener el último mensaje de la sesión DESPUÉS de la espera
+					const lastMessage = session.messages[session.messages.length - 1];
 
-		// Limpiar el buffer para esta sesión
-		delete memoryBuffer[sessionId];
+					// Si el último mensaje es el mismo que agregamos antes de la espera,
+					// significa que no llegaron mensajes nuevos durante el timeout
+					if (lastMessage.timestamp === messageTimestamp) {
+						// No hubo actividad nueva, procesar el buffer
+						const concatenatedMessage = session.messages
+							.map((msg) => msg.message)
+							.join(session.separator);
 
-		return {
-			json: {
-				sessionId,
-				concatenatedMessage,
-			},
-		};
-	}
+						const result: INodeExecutionData = {
+							json: {
+								jid: sessionId,
+								textMessageContent: concatenatedMessage,
+								messageCount: session.messages.length,
+								processedAt: new Date().toISOString(),
+							},
+						};
 
-	private static startGlobalCheckLoop(defaultTimeout: number, defaultSeparator: string): void {
-		if (globalCheckInterval) {
-			clearInterval(globalCheckInterval);
-		}
+						returnData.push(result);
 
-		globalCheckInterval = setInterval(() => {
-			try {
-				const currentTime = Date.now();
-				for (const sessionId of Object.keys(memoryBuffer)) {
-					const messages = memoryBuffer[sessionId];
-					if (!messages || messages.length === 0) continue;
-					const oldest = messages[0];
-					const timeDiff = currentTime - oldest.timestamp;
-					if (timeDiff >= defaultTimeout) {
-						const result = ChatBuffer.processBuffer(sessionId, defaultSeparator);
-						if (result) {
-							const pendingKey = `${sessionId}_${defaultTimeout}_${defaultSeparator}`;
-							pendingEmissions.set(pendingKey, result);
-						}
+						// Limpiar el buffer para esta sesión
+						delete memoryBuffer[sessionId];
 					}
+					// Si lastMessage.timestamp !== messageTimestamp, significa que llegaron
+					// mensajes nuevos durante la espera, así que no procesamos todavía
 				}
 			} catch (error) {
-				console.error('Error en globalCheckLoop:', error);
+				if (this.continueOnFail()) {
+					returnData.push({
+						json: this.getInputData(i)[0].json,
+						error: error as NodeOperationError,
+					});
+					continue;
+				}
+				throw error;
 			}
-		}, 1000);
+		}
+
+		return [returnData];
 	}
 }
