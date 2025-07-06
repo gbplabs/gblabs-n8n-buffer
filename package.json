@@ -36,6 +36,7 @@
 	},
 	"files": [
 		"dist/nodes/ChatBuffer/",
+		"chatbuffer.svg",
 		"LICENSE.md",
 		"README.md",
 		"index.js"
