@@ -1,0 +1,71 @@
+# Archivos de desarrollo
+*.ts
+!*.d.ts
+tsconfig.json
+tslint.json
+.eslintrc.js
+.prettierrc.js
+
+# Archivos de compilación
+src/
+temp/
+*.tsbuildinfo
+
+# Archivos de sistema
+.DS_Store
+Thumbs.db
+*.log
+*.tmp
+
+# Archivos de IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Archivos de pruebas
+test/
+tests/
+*.test.*
+*.spec.*
+
+# Archivos de git
+.git/
+.gitignore
+.gitattributes
+
+# Archivos de npm
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Archivos de documentación de desarrollo
+docs/
+*.md.bak
+CHANGELOG.md
+
+# Scripts de desarrollo
+publish.sh
+install.sh
+*.sh
+
+# Archivos de configuración local
+.env
+.env.local
+.env.development
+.env.test
+.env.production
+
+# Archivos temporales
+*.pid
+*.seed
+*.pid.lock
+
+# Archivos de cobertura
+coverage/
+.nyc_output/
+
+# Archivos de lock alternativos
+yarn.lock
+pnpm-lock.yaml 

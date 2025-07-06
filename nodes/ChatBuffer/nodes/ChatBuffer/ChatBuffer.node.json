@@ -1,0 +1,18 @@
+{
+	"node": "n8n-nodes-base.ChatBuffer",
+	"nodeVersion": "1.0",
+	"codexVersion": "1.0",
+	"categories": ["Utility"],
+	"resources": {
+		"credentialDocumentation": [
+			{
+				"url": ""
+			}
+		],
+		"primaryDocumentation": [
+			{
+				"url": "https://github.com/gbplabs/n8n-nodes-chatbuffer"
+			}
+		]
+	}
+}

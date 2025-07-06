@@ -1,2 +1,3 @@
-.DS_Store
-*.tsbuildinfo
+dist/nodes/ChatBuffer/package.json
+dist/nodes/ChatBuffer/package-lock.json
+dist/nodes/ChatBuffer/tsconfig.json
