@@ -1,0 +1,19 @@
+{
+	"node": "n8n-nodes-base.chatBuffer",
+	"nodeVersion": "1.0",
+	"codexVersion": "1.0",
+	"categories": ["Development", "Utility"],
+	"resources": {
+		"credentialDocumentation": [
+			{
+				"url": "https://docs.n8n.io/integrations/creating-nodes/overview/"
+			}
+		],
+		"primaryDocumentation": [
+			{
+				"url": "https://docs.n8n.io/integrations/creating-nodes/overview/"
+			}
+		]
+	},
+	"alias": ["buffer", "chat", "messages", "conversation"]
+} 
