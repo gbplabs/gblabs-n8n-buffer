@@ -1,6 +1,6 @@
 {
 	"name": "n8n-nodes-gbplabs-chat-buffer",
-	"version": "1.0.4",
+	"version": "1.0.5",
 	"description": "Nodo n8n para buffer temporal de mensajes de chat con SQLite",
 	"keywords": [
 		"n8n-community-node-package",
