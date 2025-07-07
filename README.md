@@ -18,7 +18,9 @@ Este nodo es un pequeño manifiesto. Una prueba de que, con un poco de código y
 
 
 ![Smoke Seller](./smokeseller.png "Algunos te venden 'soluciones mágicas', nosotros te damos código que funciona.")
-*Algunos te venden 'soluciones mágicas', nosotros te damos código que funciona.*
+<div align="center">
+  <em>⚠️ DANGER ⚠️</em>
+</div>
 
 ## ¿Cómo funciona? La simpleza es poder.
 
