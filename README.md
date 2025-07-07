@@ -34,6 +34,26 @@ En lugar de montar una infraestructura compleja, nos apoyamos en una de las capa
 
 Es así de simple. Sin bases de datos, sin configuraciones complejas, sin dependencias externas.
 
+## Diagrama de Flujo
+
+```mermaid
+graph TD
+    A["Start: Mensaje Entrante"] --> B{"Buffer para SessionID existe?"};
+    B -- "No" --> C["Crea nuevo buffer para SessionID"];
+    C --> D;
+    B -- "Sí" --> D["Agrega mensaje y timestamp al buffer"];
+    D --> E["Inicia/Reinicia Timeout"];
+    E --> F["...espera timeout..."];
+    F --> G{"¿Es este el último mensaje recibido?"};
+    G -- "Sí<br/>(no llegaron nuevos mensajes)" --> H["Procesa el Buffer"];
+    H --> I["1. Concatena todos los mensajes"];
+    I --> J["2. Envía el resultado final"];
+    J --> K["3. Elimina el buffer de la sesión"];
+    K --> L["Fin"];
+    G -- "No<br/>(llegó un mensaje nuevo)" --> M["No hace nada<br/>(el nuevo mensaje se encargará)"];
+    M --> L;
+```
+
 ## Instalación
 
 ```bash
