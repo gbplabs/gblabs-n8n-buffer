@@ -10,7 +10,7 @@
 
 n8n es una plataforma maravillosa, sin duda. Nos da una agilidad increíble. Pero seamos honestos: como toda herramienta, tiene sus límites. La falta de orientación a objetos o un paralelismo real nos recuerda algo importante.
 
-El verdadero poder no viene solo de arrastrar y soltar nodos, sino de **entender los fundamentos**. La promesa de que "ya no necesitas saber programar" es el hechizo más común de los vendedores de humo de nuestra era.
+El verdadero poder no viene solo de arrastrar y soltar nodos, sino de **entender los fundamentos**. La promesa de que "ya no necesitas saber programar" es el hechizo más común de los vendedores de humo de nuestra era. Muchas de las "soluciones" que verás por ahí, por ejemplo, simplemente descartan mensajes cuando dos conversaciones chocan, un "detalle" que convenientemente omiten.
 
 Este nodo es un pequeño manifiesto. Una prueba de que, con un poco de código y lógica de la vieja escuela, podemos superar las limitaciones nativas para construir soluciones más eficientes y elegantes.
 
