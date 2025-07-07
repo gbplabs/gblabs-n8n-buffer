@@ -1,6 +1,6 @@
 {
 	"name": "n8n-nodes-gbplabs-chat-buffer",
-	"version": "1.0.10",
+	"version": "1.0.11",
 	"description": "Nodo n8n para buffer temporal de mensajes de chat con timeout configurable",
 	"keywords": [
 		"n8n-community-node-package",
