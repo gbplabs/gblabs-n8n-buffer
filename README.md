@@ -16,7 +16,7 @@ Este nodo es un pequeño manifiesto. Una prueba de que, con un poco de código y
 
 **Saber programar sigue siendo una habilidad indispensable. No te dejes engañar.**
 
-![Smoke Seller](https://raw.githubusercontent.com/gbplabs/gblabs-n8n-buffer/main/smokeseller.png "Algunos te venden 'soluciones mágicas', nosotros te damos código que funciona.")
+![Smoke Seller](./smokeseller.png "Algunos te venden 'soluciones mágicas', nosotros te damos código que funciona.")
 
 ## ¿Cómo funciona? La simpleza es poder.
 
