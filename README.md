@@ -81,5 +81,13 @@ Busca el nodo `Chat Buffer` y agrégalo a tu workflow. Configura los parámetros
 Desarrollado con ❤️ y un poco de rebeldía por:
 
 **Pablo Luis Sánchez Stahlschmidt**  
-*gbplabs@gmail.com*  
+*gbplabs@gmail.com*
 *Desde la nueva tierra de la libertad 🇦🇷*
+
+
+Y con la invaluable colaboración del gran:
+
+**Federico Pereira**  
+*lordbasex@gmail.com*
+*Y sí, también desde la nueva tierra de la libertad 🇦🇷*
+
