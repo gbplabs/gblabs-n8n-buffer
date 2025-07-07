@@ -1,109 +1,56 @@
-# n8n-nodes-gbplabs-chat-buffer
+# ¿Cansado de la complejidad innecesaria?
 
-Este paquete contiene nodos personalizados para n8n, incluyendo un nodo de buffer de mensajes para chat.
+- **¿De seguir tutoriales interminables que construyen castillos en el aire con decenas de nodos?**
+- **¿De montar buffers con Redis o bases de datos para algo que solo vive unos segundos?**
+- **¿De los "vendedores de humo"?**
 
-## Nodos Incluidos
+`gblabs-n8n-buffer` es tu solución. Un buffer simple, potente y directo para sistemas de chat en n8n.
 
-### Chat Buffer
+## La verdad sobre las herramientas "No-Code"
 
-El nodo **Chat Buffer** implementa un buffer temporal de mensajes para conversaciones de chat usando SQLite. Replica la funcionalidad del workflow manual de buffer que funciona con MongoDB, pero condensado en un solo nodo.
+n8n es una plataforma maravillosa, sin duda. Nos da una agilidad increíble. Pero seamos honestos: como toda herramienta, tiene sus límites. La falta de orientación a objetos o un paralelismo real nos recuerda algo importante.
 
-#### Funcionalidad
+El verdadero poder no viene solo de arrastrar y soltar nodos, sino de **entender los fundamentos**. La promesa de que "ya no necesitas saber programar" es el hechizo más común de los vendedores de humo de nuestra era.
 
-El nodo funciona de la siguiente manera:
+Este nodo es un pequeño manifiesto. Una prueba de que, con un poco de código y lógica de la vieja escuela, podemos superar las limitaciones nativas para construir soluciones más eficientes y elegantes.
 
-1. **Recibe un mensaje**: Cada vez que se ejecuta, agrega el mensaje actual al buffer SQLite
-2. **Verifica timeout**: Comprueba si el mensaje más antiguo del buffer ha superado el tiempo de timeout configurado
-3. **Procesa o espera**:
-   - Si ha pasado el tiempo suficiente, concatena todos los mensajes del buffer y los devuelve
-   - Si no, simplemente agrega el mensaje al buffer y espera
+**Saber programar sigue siendo una habilidad indispensable. No te dejes engañar.**
 
-#### Parámetros
+![Smoke Seller](https://raw.githubusercontent.com/gbplabs/gblabs-n8n-buffer/main/smokeseller.png "Algunos te venden 'soluciones mágicas', nosotros te damos código que funciona.")
 
-- **Session ID**: ID único de la sesión/conversación (compatible con `jid` de tu workflow)
-- **Message**: Contenido del mensaje a agregar al buffer (compatible con `textMessageContent`)
-- **Timeout (ms)**: Tiempo en milisegundos a esperar antes de procesar el buffer (por defecto: 3000ms)
-- **Separator**: Separador para concatenar los mensajes (por defecto: ". ")
-- **Database Path**: Ruta del archivo SQLite (por defecto: `/tmp/n8n_message_buffer.db`)
+## ¿Cómo funciona? La simpleza es poder.
 
-#### Salida
+En lugar de montar una infraestructura compleja, nos apoyamos en una de las capacidades más básicas y potentes: **la memoria RAM.**
 
-Cuando **NO** se procesa el buffer (mensaje agregado):
+1.  **Variables Globales**: Usamos una simple variable global en n8n para mantener la cola de mensajes.
+2.  **Buffer en RAM**: Cada mensaje nuevo de una sesión se guarda en un array en memoria. Rápido, directo, sin latencia de red ni de disco.
+3.  **Timeout Inteligente**: El buffer espera unos segundos (configurable). Si llega un mensaje nuevo, el contador se reinicia. Si pasa el tiempo sin actividad, ¡listo!
+4.  **Concatenación y Envío**: Todos los mensajes en el buffer se unen en un solo texto y se envían al siguiente nodo.
+5.  **Desaparición Efímera**: Una vez procesado, el buffer de esa sesión se limpia de la RAM. No necesita persistencia porque su propósito es temporal, vive solo por unos segundos.
 
-```json
-{
-	"success": true,
-	"sessionId": "session123",
-	"message": "Mensaje agregado al buffer",
-	"bufferActive": true,
-	"bufferSize": 3,
-	"waitingForTimeout": true,
-	"timeRemaining": 1500
-}
-```
-
-Cuando **SÍ** se procesa el buffer (timeout alcanzado):
-
-```json
-{
-	"success": true,
-	"sessionId": "session123",
-	"textMessageContent": "Mensaje 1. Mensaje 2. Mensaje 3",
-	"jid": "session123",
-	"bufferProcessed": true,
-	"messagesCount": 3,
-	"deletedCount": 3,
-	"processingTime": 3250
-}
-```
-
-#### Ventajas sobre el workflow manual
-
-1. **Simplicidad**: Un solo nodo en lugar de 10+ nodos
-2. **Rendimiento**: SQLite es más rápido que bases de datos para este caso de uso
-3. **Portabilidad**: No requiere configuración de Ninguna DB
-4. **Mantenimiento**: Más fácil de mantener y debuggear
-
-#### Ejemplo de uso
-
-```
-Webhook → Chat Buffer → (procesar resultado)
-```
-
-El nodo se puede usar directamente en lugar de toda la cadena de nodos del workflow original.
+Es así de simple. Sin bases de datos, sin configuraciones complejas, sin dependencias externas.
 
 ## Instalación
 
 ```bash
 npm install n8n-nodes-gbplabs-chat-buffer
 ```
+Luego, reinicia tu instancia de n8n.
 
-## Desarrollo
+## Uso
 
-```bash
-# Instalar dependencias
-npm install
+Busca el nodo `Chat Buffer` y agrégalo a tu workflow. Configura los parámetros:
 
-# Compilar
-npm run build
+-   **Session ID**: El identificador único de la conversación (ej: `{{ $json.jid }}`).
+-   **Message**: El contenido del mensaje a "bufferear" (ej: `{{ $json.textMessageContent }}`).
+-   **Timeout (ms)**: Cuántos milisegundos esperar (por defecto: `3000`).
+-   **Separator**: El texto que unirá los mensajes (por defecto: `. `).
 
-# Desarrollo con watch
-npm run dev
+---
 
-# Linting
-npm run lint
-```
+Desarrollado con ❤️ y un poco de rebeldía por:
 
-## Compatibilidad
-
-- n8n v1.0+
-- Node.js v20.15+
-
-## Autor
-
-Creado por GBPLabs
-
-- Website: gbplabs.com
-- Email: gbplabs@gmail.com
-- Pablo Luis Sánchez Stahslchsmidt
-- 📱 +5493541578899
+**Pablo Luis Sánchez Stahlschmidt**  
+*gbplabs@gmail.com*  
+*+5493541578899*  
+*Desde la nueva tierra de la libertad 🇦🇷*
