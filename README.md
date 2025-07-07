@@ -1,3 +1,9 @@
+<div align="right">
+  Leia em outros idiomas: 
+  <a title="Inglês" href="./README.en.md">🇬🇧</a>
+  <a title="Português" href="./README.pt.md">🇧🇷</a>
+</div>
+
 # ¿Cansado de la complejidad innecesaria?
 
 - **¿De seguir tutoriales interminables que construyen castillos en el aire con decenas de nodos?**
@@ -76,5 +82,4 @@ Desarrollado con ❤️ y un poco de rebeldía por:
 
 **Pablo Luis Sánchez Stahlschmidt**  
 *gbplabs@gmail.com*  
-*+5493541578899*  
 *Desde la nueva tierra de la libertad 🇦🇷*
