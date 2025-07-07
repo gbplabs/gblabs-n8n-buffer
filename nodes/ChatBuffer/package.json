@@ -13,14 +13,14 @@
 		"automation"
 	],
 	"license": "MIT",
-	"homepage": "https://github.com/TU_USERNAME/n8n-nodes-chatbuffer",
+	"homepage": "https://github.com/gbplabs/gblabs-n8n-buffer",
 	"author": {
 		"name": "Pablo Luis Sánchez Stahslchsmidt",
 		"email": "gbplabs@gmail.com"
 	},
 	"repository": {
 		"type": "git",
-		"url": "git+https://github.com/TU_USERNAME/n8n-nodes-chatbuffer.git"
+		"url": "git+https://github.com/gbplabs/gblabs-n8n-buffer.git"
 	},
 	"main": "dist/index.js",
 	"scripts": {

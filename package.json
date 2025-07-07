@@ -12,14 +12,14 @@
 		"timeout"
 	],
 	"license": "MIT",
-	"homepage": "https://github.com/gbplabs/n8n-nodes-gbplabs-chat-buffer",
+	"homepage": "https://github.com/gbplabs/gblabs-n8n-buffer",
 	"author": {
 		"name": "Pablo Luis Sánchez Stahslchsmidt",
 		"email": "gbplabs@gmail.com"
 	},
 	"repository": {
 		"type": "git",
-		"url": "git+https://github.com/gbplabs/n8n-nodes-gbplabs-chat-buffer.git"
+		"url": "git+https://github.com/gbplabs/gblabs-n8n-buffer.git"
 	},
 	"engines": {
 		"node": ">=18.10",
