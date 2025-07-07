@@ -14,9 +14,11 @@ El verdadero poder no viene solo de arrastrar y soltar nodos, sino de **entender
 
 Este nodo es un pequeño manifiesto. Una prueba de que, con un poco de código y lógica de la vieja escuela, podemos superar las limitaciones nativas para construir soluciones más eficientes y elegantes.
 
-**Saber programar sigue siendo una habilidad indispensable. No te dejes engañar.**
+## Saber programar sigue siendo una habilidad indispensable. No te dejes engañar.
+
 
 ![Smoke Seller](./smokeseller.png "Algunos te venden 'soluciones mágicas', nosotros te damos código que funciona.")
+*Algunos te venden 'soluciones mágicas', nosotros te damos código que funciona.*
 
 ## ¿Cómo funciona? La simpleza es poder.
 
